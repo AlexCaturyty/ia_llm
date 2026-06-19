@@ -319,7 +319,7 @@
   border-bottom-left-radius: 2px;
 }
 
-/* --- ESTILOS PARA O MARKDOWN (TEXTO DA IA) --- */
+/* ESTILOS PARA O MARKDOWN (TEXTO DA IA) */
 .botBubble p {
   margin-top: 0;
   margin-bottom: 12px;
@@ -329,14 +329,12 @@
   margin-bottom: 0;
 }
 
-/* Deixa o divisor (os --- do markdown) sutil */
 .botBubble hr {
   border: 0;
   border-top: 1px solid #dee2e6;
   margin: 16px 0;
 }
 
-/* Formatação das fontes e listas */
 .botBubble ul {
   margin-top: 8px;
   margin-bottom: 0;
@@ -347,7 +345,6 @@
   margin-bottom: 6px;
 }
 
-/* Links clicáveis com o roxo da Accenture */
 .botBubble a {
   color: #a100ff;
   text-decoration: none;
@@ -412,4 +409,95 @@
 .chatInput:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* RESPONSIVIDADE (MOBILE & TABLET) */
+
+@media (max-width: 992px) {
+  .appContainer {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .sidebar {
+    padding: 15px 0;
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    max-height: 40vh; 
+    overflow-y: auto;
+  }
+
+  .logoArea {
+    padding: 0 15px 15px;
+  }
+
+  .logoAccentureImage {
+    height: 60px; 
+  }
+
+  .profileArea {
+    padding: 0 15px 15px;
+  }
+
+  .newChatButton {
+    margin: 0 15px 15px;
+  }
+
+  .recentsArea {
+    padding: 5px 15px;
+  }
+
+  .siteReference {
+    padding: 15px;
+  }
+
+  .contentArea {
+    padding: 15px;
+  }
+
+  .greetingHeader {
+    font-size: 16px;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+
+  .chatModal {
+    border-radius: 8px;
+    box-shadow: 0 -2px 15px rgba(0,0,0,0.05); 
+  }
+
+  .chatHistory {
+    padding: 15px;
+  }
+
+  .bubble {
+    max-width: 90%;
+    font-size: 14px;
+    padding: 12px 15px;
+  }
+
+  .chatInputArea {
+    padding: 15px;
+    flex-direction: column; 
+    gap: 10px;
+  }
+
+  .chatSendBtn {
+    width: 100%; 
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logoArea {
+    display: flex;
+    flex-direction: row; 
+    gap: 8px;
+    width: 100%;
+  }
+  
+  .brandDivider {
+    display: none; 
+  }
 }
