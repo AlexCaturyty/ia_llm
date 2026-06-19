@@ -6,6 +6,7 @@ import type {
   SendMessageToBotPayload,
 } from '../services/api/chat';
 import styles from './chatBot.module.css';
+import ReactMarkdown from 'react-markdown';
 
 interface ChatMessage {
   type: 'user' | 'bot';
@@ -22,9 +23,7 @@ interface ChatSession {
   profile: ChatGenerationProfile;
 }
 
-
 const STORAGE_KEY = 'accenture-ia-chat-sessions';
-
 const DEFAULT_PROFILE_KEY: ProfileKey = 'gestor';
 
 const PROFILE_OPTIONS: Record<
@@ -39,8 +38,7 @@ const PROFILE_OPTIONS: Record<
     max_tokens: 600,
     top_p: 0.9,
     frequency_penalty: 0.3,
-    systemPrompt:
-      'Você é um assistente pedagógico. Responda com clareza, detalhe os passos quando necessário e mantenha um tom didático.',
+    systemPrompt: 'Você é um assistente pedagógico. Responda com clareza, detalhe os passos quando necessário e mantenha um tom didático.',
   },
   familia: {
     key: 'familia',
@@ -50,8 +48,7 @@ const PROFILE_OPTIONS: Record<
     max_tokens: 350,
     top_p: 0.9,
     frequency_penalty: 0.2,
-    systemPrompt:
-      'Você é um assistente acolhedor. Responda com linguagem simples, tom amigável e foco em entendimento rápido.',
+    systemPrompt: 'Você é um assistente acolhedor. Responda com linguagem simples, tom amigável e foco em entendimento rápido.',
   },
   gestor: {
     key: 'gestor',
@@ -61,22 +58,14 @@ const PROFILE_OPTIONS: Record<
     max_tokens: 300,
     top_p: 0.9,
     frequency_penalty: 0,
-    systemPrompt:
-      'Você é um assistente executivo. Responda de forma objetiva, técnica e direta ao ponto.',
+    systemPrompt: 'Você é um assistente executivo. Responda de forma objetiva, técnica e direta ao ponto.',
   },
 };
 
 function getTimeGreeting(date: Date) {
   const hour = date.getHours();
-
-  if (hour >= 5 && hour < 12) {
-    return 'Bom dia';
-  }
-
-  if (hour >= 12 && hour < 18) {
-    return 'Boa tarde';
-  }
-
+  if (hour >= 5 && hour < 12) return 'Bom dia';
+  if (hour >= 12 && hour < 18) return 'Boa tarde';
   return 'Boa noite';
 }
 
@@ -88,17 +77,12 @@ function createSessionId() {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();
   }
-
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 function getSessionTitle(messages: ChatMessage[]) {
   const firstUserMessage = messages.find((message) => message.type === 'user');
-
-  if (!firstUserMessage) {
-    return 'Novo chat';
-  }
-
+  if (!firstUserMessage) return 'Novo chat';
   return firstUserMessage.text.length > 32
     ? `${firstUserMessage.text.slice(0, 32).trimEnd()}...`
     : firstUserMessage.text;
@@ -112,7 +96,6 @@ function getStoredProfile(profile?: ChatGenerationProfile) {
   if (!profile || !(profile.key in PROFILE_OPTIONS)) {
     return getDefaultProfile();
   }
-
   return PROFILE_OPTIONS[profile.key as ProfileKey];
 }
 
@@ -127,19 +110,11 @@ function createEmptySession(profile: ChatGenerationProfile = getDefaultProfile()
 }
 
 function loadStoredSessions() {
-  if (!canUseBrowserStorage()) {
-    return [] as ChatSession[];
-  }
-
+  if (!canUseBrowserStorage()) return [] as ChatSession[];
   try {
     const rawValue = window.localStorage.getItem(STORAGE_KEY);
-
-    if (!rawValue) {
-      return [] as ChatSession[];
-    }
-
+    if (!rawValue) return [] as ChatSession[];
     const parsedValue = JSON.parse(rawValue) as ChatSession[];
-
     return parsedValue
       .filter((session) => Array.isArray(session.messages) && session.messages.length > 0)
       .map((session) => ({
@@ -167,11 +142,8 @@ export function ChatLayout() {
 
   useEffect(() => {
     const updateGreeting = () => setGreeting(getTimeGreeting(new Date()));
-
     updateGreeting();
-
     const intervalId = window.setInterval(updateGreeting, 60_000);
-
     return () => window.clearInterval(intervalId);
   }, []);
 
@@ -182,10 +154,7 @@ export function ChatLayout() {
   }, [history]);
 
   useEffect(() => {
-    if (!canUseBrowserStorage()) {
-      return;
-    }
-
+    if (!canUseBrowserStorage()) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
   }, [sessions]);
 
@@ -197,10 +166,8 @@ export function ChatLayout() {
 
   const updateSessionMessages = (sessionId: string, nextMessages: ChatMessage[]) => {
     const updatedAt = Date.now();
-
     setSessions((previousSessions) => {
       const existingSession = previousSessions.find((session) => session.id === sessionId);
-
       if (!existingSession) {
         return [
           {
@@ -213,16 +180,15 @@ export function ChatLayout() {
           ...previousSessions,
         ];
       }
-
       return previousSessions.map((session) =>
         session.id === sessionId
           ? {
-              ...session,
-              title: getSessionTitle(nextMessages),
-              messages: nextMessages,
-              updatedAt,
-              profile: selectedProfile,
-            }
+            ...session,
+            title: getSessionTitle(nextMessages),
+            messages: nextMessages,
+            updatedAt,
+            profile: selectedProfile,
+          }
           : session,
       );
     });
@@ -230,7 +196,6 @@ export function ChatLayout() {
 
   const startNewChat = () => {
     const newSession = createEmptySession(selectedProfile);
-
     setSessions((previousSessions) => [newSession, ...previousSessions]);
     setActiveSessionId(newSession.id);
     setMessage('');
@@ -243,7 +208,6 @@ export function ChatLayout() {
 
   const deleteChatSession = (sessionId: string) => {
     setSessions((previousSessions) => previousSessions.filter((session) => session.id !== sessionId));
-
     if (activeSessionId === sessionId) {
       setActiveSessionId(null);
       setMessage('');
@@ -252,16 +216,15 @@ export function ChatLayout() {
 
   const handleProfileChange = (profileKey: ProfileKey) => {
     setSelectedProfileKey(profileKey);
-
     if (activeSessionId) {
       setSessions((previousSessions) =>
         previousSessions.map((session) =>
           session.id === activeSessionId
             ? {
-                ...session,
-                profile: PROFILE_OPTIONS[profileKey],
-                updatedAt: Date.now(),
-              }
+              ...session,
+              profile: PROFILE_OPTIONS[profileKey],
+              updatedAt: Date.now(),
+            }
             : session,
         ),
       );
@@ -270,13 +233,9 @@ export function ChatLayout() {
 
   const handleSendMessage = () => {
     const trimmedMessage = message.trim();
-
-    if (!trimmedMessage) {
-      return;
-    }
+    if (!trimmedMessage) return;
 
     setMessage('');
-
     const sessionId = activeSessionId ?? createSessionId();
     const nextUserMessages: ChatMessage[] = [
       ...history,
@@ -291,10 +250,7 @@ export function ChatLayout() {
       })) as ChatPromptMessage[],
     ];
 
-    if (!activeSessionId) {
-      setActiveSessionId(sessionId);
-    }
-
+    if (!activeSessionId) setActiveSessionId(sessionId);
     updateSessionMessages(sessionId, nextUserMessages);
 
     const payload: SendMessageToBotPayload = {
@@ -322,7 +278,15 @@ export function ChatLayout() {
   return (
     <div className={styles.appContainer}>
       <aside className={styles.sidebar}>
-        <div className={styles.logoArea}>AcolheIA</div>
+
+        <div className={styles.logoArea}>
+          <img src="/accenture-logo.png" alt="Accenture" className={styles.logoAccentureImage} />
+          <span className={styles.brandDivider}>|</span>
+          <div className={styles.diversaInfo}>
+            <span className={styles.diversaTitle}>DIVERSA</span>
+            <span className={styles.diversaSubtitle}>Educação Inclusiva</span>
+          </div>
+        </div>
 
         <div className={styles.profileArea}>
           <label className={styles.profileLabel} htmlFor="profile-select">
@@ -342,10 +306,14 @@ export function ChatLayout() {
           </select>
         </div>
 
-        <div className={styles.recentsArea}>Recentes</div>
+        <button type="button" className={styles.newChatButton} onClick={startNewChat}>
+          + Nova Consulta
+        </button>
+
+        <div className={styles.recentsArea}>Histórico</div>
         <div className={styles.recentList}>
           {orderedSessions.length === 0 ? (
-            <div className={styles.recentEmpty}>Nenhuma conversa salva ainda.</div>
+            <div className={styles.recentEmpty}>Nenhuma conversa salva.</div>
           ) : (
             orderedSessions.map((session) => (
               <div
@@ -366,7 +334,7 @@ export function ChatLayout() {
                   type="button"
                   className={styles.recentDeleteButton}
                   onClick={() => deleteChatSession(session.id)}
-                  aria-label={`Apagar chat ${session.title}`}
+                  aria-label={`Apagar chat`}
                 >
                   ×
                 </button>
@@ -375,47 +343,43 @@ export function ChatLayout() {
           )}
         </div>
 
-        <button type="button" className={styles.newChatButton} onClick={startNewChat}>
-          Novo chat
-        </button>
-
         <div className={styles.sidebarSpacer} />
 
-        <div className={styles.userProfile}>
-          <div className={styles.avatar}>U</div>
-          <div>Usuário</div>
+        <div className={styles.siteReference}>
+          Base de dados extraída do<br />
+          <strong>Instituto Rodrigo Mendes</strong>
         </div>
       </aside>
 
       <main className={styles.contentArea}>
         <div className={styles.greetingHeader}>
-          <span className={styles.greetingIcon}>✦</span>
-          <span>{greeting}, Usuário</span>
+          <span>{greeting}, seja bem-vindo(a) ao Assistente DIVERSA.</span>
         </div>
 
         <section className={styles.chatModal}>
-          <header className={styles.chatHeader}>
-            <div>
-              <h1 className={styles.chatTitle}>Assistente</h1>
-              <p className={styles.chatSubtitle}>
-                Perfil atual: {selectedProfile.label}
-              </p>
-            </div>
-          </header>
-
           <div className={styles.chatHistory} ref={chatHistoryRef}>
+            {history.length === 0 && (
+              <div className={styles.welcomeMessage}>
+                <h2>Como posso ajudar com a educação inclusiva hoje?</h2>
+                <p>Selecione um perfil ao lado e faça sua pergunta baseada nos artigos do portal.</p>
+              </div>
+            )}
+
             {history.map((msg, index) => (
               <div
                 key={`${msg.type}-${index}`}
-                className={`${styles.bubble} ${msg.type === 'user' ? styles.userBubble : styles.botBubble}`}
+                className={`${styles.messageRow} ${msg.type === 'user' ? styles.messageRowUser : styles.messageRowBot}`}
               >
-                {msg.text}
+                {msg.type === 'bot' && <div className={styles.avatarBot}>D</div>}
+                <div className={`${styles.bubble} ${msg.type === 'user' ? styles.userBubble : styles.botBubble}`}>
+                  <ReactMarkdown>{msg.text}</ReactMarkdown>
+                </div>
               </div>
             ))}
           </div>
 
           {chatMutation.isPending && (
-            <div className={styles.typingIndicator}>A assistente está digitando...</div>
+            <div className={styles.typingIndicator}>Pesquisando na base de conhecimento...</div>
           )}
 
           <div className={styles.chatInputArea}>
@@ -424,11 +388,9 @@ export function ChatLayout() {
               value={message}
               onChange={(event) => setMessage(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  handleSendMessage();
-                }
+                if (event.key === 'Enter') handleSendMessage();
               }}
-              placeholder="Digite sua pergunta..."
+              placeholder="Digite sua dúvida sobre inclusão escolar..."
               className={styles.chatInput}
               disabled={chatMutation.isPending}
             />
@@ -442,7 +404,6 @@ export function ChatLayout() {
             </button>
           </div>
         </section>
-
       </main>
     </div>
   );
